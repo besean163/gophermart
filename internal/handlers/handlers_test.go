@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -20,15 +22,18 @@ func TestRegisterUser(t *testing.T) {
 	authService := mock.NewMockAuthService(ctrl)
 	loyaltyService := mock.NewMockLoyaltyService(ctrl)
 
+	authUser := entities.User{
+		Login:    "login_ok",
+		Password: getMD5Pass("password_ok"),
+	}
+	authUserToken := "token"
+	authService.EXPECT().BuildUserToken(authUser).Return(authUserToken, nil)
 	authService.EXPECT().GetUser("login_fail").Return(&entities.User{
 		Login:    "login_fail",
 		Password: "password_fail",
 	})
 	authService.EXPECT().GetUser("login_ok").Return(nil)
-	authService.EXPECT().SaveUser(entities.User{
-		Login:    "login_ok",
-		Password: "a42a0e8021b21b1d032575eeaf7bc1bb",
-	}).Return(nil)
+	authService.EXPECT().SaveUser(authUser).Return(nil)
 
 	handler := New(authService, loyaltyService, "")
 	handler.Mount()
@@ -88,14 +93,11 @@ func TestLoginUser(t *testing.T) {
 
 	authUser := entities.User{
 		Login:    "login_ok",
-		Password: "a42a0e8021b21b1d032575eeaf7bc1bb",
+		Password: getMD5Pass("password_ok"),
 	}
 	authUserToken := "token"
 	authService.EXPECT().BuildUserToken(authUser).Return(authUserToken, nil)
-	authService.EXPECT().GetUser("login_ok").Return(&entities.User{
-		Login:    "login_ok",
-		Password: "a42a0e8021b21b1d032575eeaf7bc1bb",
-	})
+	authService.EXPECT().GetUser("login_ok").Return(&authUser)
 	authService.EXPECT().GetUser("login_fail").Return(&entities.User{
 		Login:    "login_fail",
 		Password: "password_fail",
@@ -161,7 +163,7 @@ func TestPostOrder(t *testing.T) {
 	authUser := entities.User{
 		ID:       1,
 		Login:    "login_auth",
-		Password: "a42a0e8021b21b1d032575eeaf7bc1bb",
+		Password: getMD5Pass("password_ok"),
 	}
 
 	ctrl := gomock.NewController(t)
@@ -171,11 +173,7 @@ func TestPostOrder(t *testing.T) {
 	authService.EXPECT().BuildUserToken(authUser).Return(authUserToken, nil).AnyTimes()
 	authService.EXPECT().GetUserByToken(authUserToken).Return(&authUser, nil).AnyTimes()
 	authService.EXPECT().GetUserByToken("").Return(nil, errors.New("token error")).AnyTimes()
-	authService.EXPECT().GetUser("login_auth").Return(&entities.User{
-		ID:       1,
-		Login:    "login_auth",
-		Password: "a42a0e8021b21b1d032575eeaf7bc1bb",
-	}).AnyTimes()
+	authService.EXPECT().GetUser("login_auth").Return(&authUser).AnyTimes()
 
 	loyaltyService := mock.NewMockLoyaltyService(ctrl)
 	// показывает что нет созданного заказа, для проверки сохранения нового
@@ -273,7 +271,7 @@ func TestGetOrders(t *testing.T) {
 	authUser := entities.User{
 		ID:       1,
 		Login:    "login_auth",
-		Password: "a42a0e8021b21b1d032575eeaf7bc1bb",
+		Password: getMD5Pass("password_ok"),
 	}
 
 	ctrl := gomock.NewController(t)
@@ -348,7 +346,7 @@ func TestGetWithdrawns(t *testing.T) {
 	authUser := entities.User{
 		ID:       1,
 		Login:    "login_auth",
-		Password: "a42a0e8021b21b1d032575eeaf7bc1bb",
+		Password: getMD5Pass("password_ok"),
 	}
 
 	ctrl := gomock.NewController(t)
@@ -428,7 +426,7 @@ func TestGetBalance(t *testing.T) {
 	authUser := entities.User{
 		ID:       1,
 		Login:    "login_auth",
-		Password: "a42a0e8021b21b1d032575eeaf7bc1bb",
+		Password: getMD5Pass("password_ok"),
 	}
 
 	ctrl := gomock.NewController(t)
@@ -498,7 +496,7 @@ func TestSaveWithdrawn(t *testing.T) {
 	authUser := entities.User{
 		ID:       1,
 		Login:    "login_auth",
-		Password: "a42a0e8021b21b1d032575eeaf7bc1bb",
+		Password: getMD5Pass("password_ok"),
 	}
 
 	ctrl := gomock.NewController(t)
@@ -571,4 +569,11 @@ func TestSaveWithdrawn(t *testing.T) {
 			assert.Equal(t, test.code, response.StatusCode)
 		})
 	}
+}
+
+func getMD5Pass(p string) string {
+	h := md5.New()
+	h.Write([]byte(p))
+
+	return hex.EncodeToString(h.Sum(nil))
 }
