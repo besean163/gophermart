@@ -42,24 +42,27 @@ type Handler struct {
 	HashSecret     string
 }
 
-func New(
+func NewHandlers(
 	authService AuthService,
 	loyaltyService LoyaltyService,
 	hashSecret string,
 ) Handler {
-	return Handler{
+	h := Handler{
 		Router:         chi.NewRouter(),
 		AuthService:    authService,
 		LoyaltyService: loyaltyService,
 		HashSecret:     hashSecret,
 	}
+
+	h.mount()
+	return h
 }
 
 func (handler Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handler.Router.ServeHTTP(w, r)
 }
 
-func (handler Handler) Mount() {
+func (handler Handler) mount() {
 	handler.Router.Route("/api/user", func(r chi.Router) {
 		r.Post("/login", handler.Login)
 		r.Post("/register", handler.Register)

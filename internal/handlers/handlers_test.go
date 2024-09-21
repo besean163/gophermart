@@ -35,8 +35,7 @@ func TestRegisterUser(t *testing.T) {
 	authService.EXPECT().GetUser("login_ok").Return(nil)
 	authService.EXPECT().SaveUser(authUser).Return(nil)
 
-	handler := New(authService, loyaltyService, "")
-	handler.Mount()
+	handler := NewHandlers(authService, loyaltyService, "")
 
 	tests := []struct {
 		name   string
@@ -103,8 +102,7 @@ func TestLoginUser(t *testing.T) {
 		Password: "password_fail",
 	})
 
-	handler := New(authService, loyaltyService, secret)
-	handler.Mount()
+	handler := NewHandlers(authService, loyaltyService, secret)
 
 	tests := []struct {
 		name      string
@@ -157,7 +155,7 @@ func TestLoginUser(t *testing.T) {
 }
 
 func TestPostOrder(t *testing.T) {
-	logger.Set()
+	logger.NewLogger()
 
 	secret := "test_secret"
 	authUser := entities.User{
@@ -192,9 +190,7 @@ func TestPostOrder(t *testing.T) {
 	})
 	loyaltyService.EXPECT().SaveOrder(gomock.Any()).Return(nil)
 
-	handler := New(authService, loyaltyService, secret)
-
-	handler.Mount()
+	handler := NewHandlers(authService, loyaltyService, secret)
 
 	tests := []struct {
 		name      string
@@ -265,7 +261,7 @@ func TestPostOrder(t *testing.T) {
 }
 
 func TestGetOrders(t *testing.T) {
-	logger.Set()
+	logger.NewLogger()
 
 	secret := "test_secret"
 	authUser := entities.User{
@@ -292,9 +288,7 @@ func TestGetOrders(t *testing.T) {
 	})
 	loyaltyService.EXPECT().GetUserOrders(authUser.ID).Return([]*entities.Order{})
 
-	handler := New(authService, loyaltyService, secret)
-
-	handler.Mount()
+	handler := NewHandlers(authService, loyaltyService, secret)
 
 	tests := []struct {
 		name      string
@@ -339,7 +333,7 @@ func TestGetOrders(t *testing.T) {
 }
 
 func TestGetWithdrawns(t *testing.T) {
-	logger.Set()
+	logger.NewLogger()
 	testTime, _ := time.Parse(time.RFC3339, "2020-12-09T16:09:57+03:00")
 
 	secret := "test_secret"
@@ -369,8 +363,7 @@ func TestGetWithdrawns(t *testing.T) {
 	})
 	loyaltyService.EXPECT().GetUserWithdrawals(authUser.ID).Return([]*entities.Withdrawn{})
 
-	handler := New(authService, loyaltyService, secret)
-	handler.Mount()
+	handler := NewHandlers(authService, loyaltyService, secret)
 
 	tests := []struct {
 		name      string
@@ -420,7 +413,7 @@ func TestGetWithdrawns(t *testing.T) {
 }
 
 func TestGetBalance(t *testing.T) {
-	logger.Set()
+	logger.NewLogger()
 
 	secret := "test_secret"
 	authUser := entities.User{
@@ -443,10 +436,7 @@ func TestGetBalance(t *testing.T) {
 		Withdrawn: 50,
 	})
 
-	handler := New(authService, loyaltyService, secret)
-
-	handler.Mount()
-
+	handler := NewHandlers(authService, loyaltyService, secret)
 	tests := []struct {
 		name      string
 		method    string
@@ -490,7 +480,7 @@ func TestGetBalance(t *testing.T) {
 }
 
 func TestSaveWithdrawn(t *testing.T) {
-	logger.Set()
+	logger.NewLogger()
 
 	secret := "test_secret"
 	authUser := entities.User{
@@ -514,9 +504,7 @@ func TestSaveWithdrawn(t *testing.T) {
 	}).AnyTimes()
 	loyaltyService.EXPECT().SaveWithdrawn(gomock.Any()).Return(nil).AnyTimes()
 
-	handler := New(authService, loyaltyService, secret)
-
-	handler.Mount()
+	handler := NewHandlers(authService, loyaltyService, secret)
 
 	tests := []struct {
 		name      string

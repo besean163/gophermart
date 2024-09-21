@@ -9,7 +9,7 @@ type CustomLogger struct {
 	*zap.Logger
 }
 
-func Set() error {
+func NewLogger() error {
 	zLogger, err := zap.NewProduction()
 	if err != nil {
 		return err

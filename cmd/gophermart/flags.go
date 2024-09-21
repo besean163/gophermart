@@ -2,19 +2,18 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 )
 
-type ServerConfig struct {
+type AppConfig struct {
 	RunAddress        string
 	RunAccrualAddress string
 	DatabaseDSN       string
 	HashSecret        string
 }
 
-func NewConfig() ServerConfig {
-	config := ServerConfig{}
+func NewConfig() AppConfig {
+	config := AppConfig{}
 	flag.StringVar(&config.RunAddress, "a", "", "server run port")
 	flag.StringVar(&config.RunAccrualAddress, "r", "", "accrual run port")
 	flag.StringVar(&config.DatabaseDSN, "d", "", "data base dsn")
@@ -25,9 +24,6 @@ func NewConfig() ServerConfig {
 		config.RunAddress = runAddressEnv
 	}
 
-	fmt.Println(os.Getenv("ACCRUAL_SYSTEM_ADDRESS"))
-	fmt.Println(config.RunAccrualAddress)
-	fmt.Println(config.RunAccrualAddress == "")
 	if runAccrualAddressEnv := os.Getenv("ACCRUAL_SYSTEM_ADDRESS"); runAccrualAddressEnv != "" && config.RunAccrualAddress == "" {
 		config.RunAccrualAddress = runAccrualAddressEnv
 	}

@@ -13,7 +13,7 @@ type Repository struct {
 	DB *gorm.DB
 }
 
-func New(db *gorm.DB) (Repository, error) {
+func NewRepository(db *gorm.DB) (Repository, error) {
 	if db == nil {
 		return Repository{}, errors.New("empty db connect")
 	}
