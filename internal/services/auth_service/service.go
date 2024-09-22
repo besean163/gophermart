@@ -9,6 +9,10 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+var (
+	ErrEmptyHashSecret = errors.New("empty hash secret")
+)
+
 type Service struct {
 	repository  UserRepository
 	tokenSecret string
@@ -43,7 +47,7 @@ func (service Service) GetUser(login string) *entities.User {
 
 func (service Service) BuildUserToken(user entities.User) (string, error) {
 	if service.tokenSecret == "" {
-		return "", errors.New("empty hash secret")
+		return "", ErrEmptyHashSecret
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims{
 		RegisteredClaims: jwt.RegisteredClaims{

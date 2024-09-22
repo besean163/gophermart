@@ -3,10 +3,15 @@ package orderrepository
 import (
 	"errors"
 
+	"github.com/besean163/gophermart/internal/database"
 	"github.com/besean163/gophermart/internal/entities"
 	"github.com/besean163/gophermart/internal/logger"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+)
+
+var (
+	ErrEmptyBDConnection = errors.New("empty db connect")
 )
 
 type Repository struct {
@@ -15,10 +20,11 @@ type Repository struct {
 
 func NewRepository(db *gorm.DB) (Repository, error) {
 	if db == nil {
-		return Repository{}, errors.New("empty db connect")
+		return Repository{}, ErrEmptyBDConnection
 	}
 
-	err := migration(db)
+	err := database.Migration(db, entities.Order{}, entities.Withdrawn{})
+
 	if err != nil {
 		logger.Get().Warn("migration error", zap.String("error", err.Error()))
 		return Repository{}, err
@@ -64,42 +70,4 @@ func (repository Repository) GetWaitProcessOrders() []*entities.Order {
 	var orders []*entities.Order
 	repository.DB.Find(&orders, "status IN ?", []string{entities.OrderStatusNew, entities.OrderStatusProcessing})
 	return orders
-}
-
-func migration(db *gorm.DB) error {
-	// дропаем таблицы для чистоты каждого запуска
-	dropTables(db)
-
-	if !db.Migrator().HasTable(&entities.Order{}) {
-		err := db.Migrator().CreateTable(&entities.Order{})
-		if err != nil {
-			return err
-		}
-	}
-
-	if !db.Migrator().HasTable(&entities.Withdrawn{}) {
-		err := db.Migrator().CreateTable(&entities.Withdrawn{})
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func dropTables(db *gorm.DB) error {
-	if db.Migrator().HasTable(&entities.Order{}) {
-		err := db.Migrator().DropTable(&entities.Order{})
-		if err != nil {
-			return err
-		}
-	}
-
-	if db.Migrator().HasTable(&entities.Withdrawn{}) {
-		err := db.Migrator().DropTable(&entities.Withdrawn{})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

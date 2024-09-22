@@ -2,12 +2,10 @@ package loyalityservice
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"github.com/besean163/gophermart/internal/entities"
 	"github.com/besean163/gophermart/internal/logger"
-	"github.com/go-resty/resty/v2"
 	"go.uber.org/zap"
 )
 
@@ -89,10 +87,15 @@ type AccrualOrder struct {
 
 func (service Service) runAccrualJobService(ctx context.Context) {
 	orderIn := make(chan entities.Order, 1)
+	savingOrders := make(chan entities.Order, 1)
+	errorChan := make(chan error)
 
 	for workerID := 1; workerID <= accrualWorkerCount; workerID++ {
-		go service.worker(ctx, workerID, orderIn)
+		go worker(ctx, workerID, orderIn, savingOrders, service.accrualServiceURL, errorChan)
 	}
+
+	go service.saver(ctx, savingOrders)
+	go log(ctx, errorChan)
 
 	go func() {
 		ticker := time.NewTicker(time.Second * tickSec)
@@ -111,61 +114,27 @@ func (service Service) runAccrualJobService(ctx context.Context) {
 	}()
 }
 
-func (service Service) worker(ctx context.Context, id int, orderIn chan entities.Order) {
+func (service Service) saver(ctx context.Context, savingOrders chan entities.Order) {
 	for {
 		select {
-		case <-ctx.Done():
-			logger.Get().Info("worker stopped", zap.Int("id", id))
-			return
-		case order := <-orderIn:
-			var accrualOrder AccrualOrder
-			response, err := resty.New().R().SetResult(&accrualOrder).Get(service.accrualServiceURL + "/api/orders/" + order.Number)
-			if err != nil {
-				logger.Get().Warn("accrual request error", zap.String("error", err.Error()))
-				continue
-			}
-
-			switch response.StatusCode() {
-			case http.StatusNoContent:
-				order.Status = entities.OrderStatusInvalid
-			case http.StatusTooManyRequests:
-				return
-			case http.StatusInternalServerError:
-				return
-			}
-
-			if response.StatusCode() == http.StatusOK {
-
-				if order.Number != accrualOrder.Order {
-					logger.Get().Warn("wrong order number")
-					continue
-				}
-
-				if order.Number != accrualOrder.Order {
-					logger.Get().Warn("wrong order number")
-					continue
-				}
-
-				switch accrualOrder.Status {
-				case entities.AccrealStatusRegistered:
-					continue
-				case entities.AccrealStatusProcessing:
-					order.Status = entities.OrderStatusProcessing
-				case entities.AccrealStatusInvalid:
-					order.Status = entities.OrderStatusInvalid
-				case entities.AccrealStatusProcessed:
-					order.Status = entities.OrderStatusProcessed
-					order.Accrual = accrualOrder.Accrual
-				}
-			}
-
-			order.UpdatedAt = time.Now()
-			err = service.repository.SaveOrder(order)
+		case order := <-savingOrders:
+			err := service.repository.SaveOrder(order)
 			if err != nil {
 				logger.Get().Warn("save order error", zap.String("error", err.Error()))
 			}
-			logger.Get().Info("acc order", zap.Any("struct", accrualOrder))
+		case <-ctx.Done():
+			return
 		}
+	}
+}
 
+func log(ctx context.Context, errorChan chan error) {
+	for {
+		select {
+		case err := <-errorChan:
+			logger.Get().Warn("Service error.", zap.String("error", err.Error()))
+		case <-ctx.Done():
+			return
+		}
 	}
 }
