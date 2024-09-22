@@ -11,7 +11,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-func worker(ctx context.Context, id int, orderIn chan entities.Order, saveOrderOut chan entities.Order, accrualUrl string, errorChan chan error) {
+func worker(ctx context.Context, id int, orderIn chan entities.Order, saveOrderOut chan entities.Order, accrualURL string, errorChan chan error) {
 	preffix := fmt.Sprintf("worker #%d", id)
 	for {
 		select {
@@ -20,7 +20,7 @@ func worker(ctx context.Context, id int, orderIn chan entities.Order, saveOrderO
 			return
 		case order := <-orderIn:
 			var accrualOrder AccrualOrder
-			response, err := resty.New().R().SetResult(&accrualOrder).Get(accrualUrl + "/api/orders/" + order.Number)
+			response, err := resty.New().R().SetResult(&accrualOrder).Get(accrualURL + "/api/orders/" + order.Number)
 			if err != nil {
 				errorChan <- makeWorkerError(preffix, err)
 				continue
