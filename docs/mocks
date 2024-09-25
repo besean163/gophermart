@@ -1,0 +1,6 @@
+/home/besean/go/bin/mockgen -source=cmd/gophermart/main.go -destination=internal/handlers/mock/mocks.go -package=mock AuthService OrderService
+
+Postgres:
+create database gophermart;
+create user gophermart with encrypted password 'gophermart';
+grant all privileges on database gophermart to gophermart;
