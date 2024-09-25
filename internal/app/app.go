@@ -10,6 +10,7 @@ import (
 	"github.com/besean163/gophermart/internal/database"
 	"github.com/besean163/gophermart/internal/handlers"
 	"github.com/besean163/gophermart/internal/logger"
+	"github.com/besean163/gophermart/internal/migration"
 	databaseorders "github.com/besean163/gophermart/internal/repositories/database/order_repository"
 	databaseusers "github.com/besean163/gophermart/internal/repositories/database/user_repository"
 	inmemorders "github.com/besean163/gophermart/internal/repositories/inmem/order_repository"
@@ -42,6 +43,10 @@ func NewApp() App {
 
 func (app App) Run() error {
 	err := logger.NewLogger()
+	if err != nil {
+		return err
+	}
+	err = migration.Run(app.config.DatabaseDSN)
 	if err != nil {
 		return err
 	}

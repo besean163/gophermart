@@ -15,14 +15,12 @@ var (
 	ErrEmptyDBConnectRow = errors.New("empty dsn row")
 )
 
-func Run() error {
-	logger.NewLogger()
-	config := NewConfig()
-	if config.DatabaseDSN == "" {
+func Run(dsn string) error {
+	if dsn == "" {
 		return ErrEmptyDBConnectRow
 	}
 
-	db, err := database.NewDB(config.DatabaseDSN)
+	db, err := database.NewDB(dsn)
 	if err != nil {
 		return err
 	}
