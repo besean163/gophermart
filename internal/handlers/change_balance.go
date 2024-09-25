@@ -17,11 +17,6 @@ func (handler Handler) ChangeBalance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Body == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

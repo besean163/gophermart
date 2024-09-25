@@ -3,10 +3,7 @@ package userrepository
 import (
 	"errors"
 
-	"github.com/besean163/gophermart/internal/database"
 	"github.com/besean163/gophermart/internal/entities"
-	"github.com/besean163/gophermart/internal/logger"
-	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -21,12 +18,6 @@ type Repository struct {
 func New(db *gorm.DB) (Repository, error) {
 	if db == nil {
 		return Repository{}, ErrEmptyBDConnection
-	}
-
-	err := database.Migration(db, entities.User{})
-	if err != nil {
-		logger.Get().Warn("migration error", zap.String("error", err.Error()))
-		return Repository{}, err
 	}
 
 	return Repository{

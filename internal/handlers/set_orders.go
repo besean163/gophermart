@@ -39,10 +39,10 @@ func (handler Handler) SetOrders(w http.ResponseWriter, r *http.Request) {
 		if existOrder.UserID == user.ID {
 			w.WriteHeader(http.StatusOK)
 			return
-		} else {
-			w.WriteHeader(http.StatusConflict)
-			return
 		}
+
+		w.WriteHeader(http.StatusConflict)
+		return
 	}
 
 	order := entities.NewOrder(numOrder, user.ID)

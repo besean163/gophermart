@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -40,7 +40,7 @@ func NewApp() App {
 	}
 }
 
-func (app App) run() error {
+func (app App) Run() error {
 	err := logger.NewLogger()
 	if err != nil {
 		return err

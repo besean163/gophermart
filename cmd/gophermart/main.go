@@ -2,11 +2,13 @@ package main
 
 import (
 	"log"
+
+	"github.com/besean163/gophermart/internal/app"
 )
 
 func main() {
-	app := NewApp()
-	if err := app.run(); err != nil {
+	a := app.NewApp()
+	if err := a.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
